@@ -3,6 +3,7 @@
 namespace Alexusmai\LaravelFileManager\Traits;
 
 use Alexusmai\LaravelFileManager\Services\ACLService\ACL;
+use Spatie\UrlSigner\Laravel\UrlSignerFacade;
 use Storage;
 
 trait ContentTrait
@@ -25,7 +26,17 @@ trait ContentTrait
 
         // get a list of files
         $files = $this->filterFile($disk, $content);
+        //$files=null;
+        info('yesy');
+        foreach($files as $key => $csm)
+        {
+            $files[$key]['durl'] = UrlSignerFacade::sign('http://dms.wmra/download-file/'.$disk.'/'.$files[$key]['path'].'?dsk=nothing', 1);
+            $files[$key]['surl'] = UrlSignerFacade::sign('http://dms.wmra/file-manager/stream-file/'.$disk.'/'.$files[$key]['path'], 1);
+            $files[$key]['purl'] = UrlSignerFacade::sign('http://dms.wmra/file-manager/preview/'.$disk.'/'.$files[$key]['path'], 1);
+            $files[$key]['thurl'] = UrlSignerFacade::sign('http://dms.wmra/file-manager/thumbnails/'.$disk.'/'.$files[$key]['path'], 1);
 
+        }
+       // var_dump($files);
         return compact('directories', 'files');
     }
 
@@ -96,11 +107,17 @@ trait ContentTrait
         $pathInfo = pathinfo($path);
 
         $file['basename'] = $pathInfo['basename'];
+        $file['basesurl'] = 'test';
         $file['dirname'] = $pathInfo['dirname'] === '.' ? ''
             : $pathInfo['dirname'];
         $file['extension'] = isset($pathInfo['extension'])
             ? $pathInfo['extension'] : '';
         $file['filename'] = $pathInfo['filename'];
+        $file['durl'] = UrlSignerFacade::sign('http://dms.wmra/download-file/'.$disk.'/'.$path, 1);
+        $file['surl'] = UrlSignerFacade::sign('http://dms.wmra/file-manager/stream-file/'.$disk.'/'.$path, 1);
+        $file['purl'] = UrlSignerFacade::sign('http://dms.wmra/file-manager/preview/'.$disk.'/'.$path, 1);
+        $file['thurl'] = UrlSignerFacade::sign('http://dms.wmra/file-manager/thumbnails/'.$disk.'/'.$path, 1);
+
 
         // if ACL ON
         if (config('file-manager.acl')) {
