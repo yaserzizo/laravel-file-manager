@@ -20,7 +20,7 @@ class FileManager
      *
      * @return array
      */
-    public function initialize()
+    public function initialize($path)
     {
         // if config not found
         if (!config()->has('file-manager')) {
@@ -40,6 +40,10 @@ class FileManager
             'rightPath',
             'windowsConfig',
         ]);
+        $config['lefttDisk'] = $path;
+       $config['rightDisk'] = $path;
+        $config['leftPath'] = $path;
+        $config['rightPath'] = $path;
 
         // disk list
         foreach (config('file-manager.diskList') as $disk) {
@@ -52,7 +56,7 @@ class FileManager
 
         // get language
         $config['lang'] = app()->getLocale();
-
+        //var_dump($config);
         return [
             'result' => [
                 'status'  => 'success',
@@ -244,8 +248,9 @@ class FileManager
         } else {
             $filename = basename($path);
         }
-
-        return Storage::disk($disk)->download($path, $filename);
+        info($path);
+        info(storage_path('private').'/'.$path);
+        return  Storage::disk($disk)->download($path, $filename);//Response::download($path);
     }
 
     /**
