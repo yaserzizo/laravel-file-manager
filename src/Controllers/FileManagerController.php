@@ -17,8 +17,11 @@ use Alexusmai\LaravelFileManager\Events\Rename;
 use Alexusmai\LaravelFileManager\Requests\RequestValidator;
 use Alexusmai\LaravelFileManager\FileManager;
 use Alexusmai\LaravelFileManager\Services\Zip;
+use App\Project;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Spatie\UrlSigner\Laravel\UrlSignerFacade;
+
 
 class FileManagerController extends Controller
 {
@@ -42,10 +45,14 @@ class FileManagerController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function initialize()
+    public function initialize(Request $request)
     {
+        $project = Project::findOrFail($request->project);
+        $p=$project->code;
+        $t = $request->task;
+        $path = $t?$p.'/'.$t:$p;
         return response()->json(
-            $this->fm->initialize()
+            $this->fm->initialize($path)
         );
     }
 
@@ -58,6 +65,8 @@ class FileManagerController extends Controller
      */
     public function content(RequestValidator $request)
     {
+
+
         return response()->json(
             $this->fm->content(
                 $request->input('disk'),
