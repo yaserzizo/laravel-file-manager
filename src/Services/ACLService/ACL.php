@@ -35,7 +35,7 @@ class ACL
         $pth = explode('/',$path);
         $projects = Project::whereHasMedia($pth)->first();
         $projects->load('members');
-        info('authUser:' . auth()->id());
+       // info('authUser:' . auth()->id());
         if ($projects->user_id == auth()->id()) {
             info('creator');
             return 2;
@@ -52,7 +52,7 @@ class ACL
             info($contacts);
             return 2;
         }
-        return config('file-manager.aclStrategy') === 'blacklist' ? 2 : 0;
+        return config('file-manager.aclStrategy') === 'blacklist' ? 2 : 1;
        // var_dump(strlen($pth[0]).':'.strlen($pth[1]));
            // Media::inDirectory('uploads', 'foo/bar');
         // get rules list
