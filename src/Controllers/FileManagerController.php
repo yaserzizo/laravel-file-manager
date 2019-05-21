@@ -47,8 +47,8 @@ class FileManagerController extends Controller
      */
     public function initialize(Request $request)
     {
-        $project = Project::findOrFail($request->project);
-        $p=$project->code;
+        //$project = Project::findOrFail($request->project);
+        $p=$request->project;
         $t = $request->task;
         $path = $t?$p.'/'.$t:$p;
         return response()->json(
