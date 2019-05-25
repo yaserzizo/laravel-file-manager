@@ -7,7 +7,15 @@ use Alexusmai\LaravelFileManager\Traits\CheckTrait;
 use Alexusmai\LaravelFileManager\Traits\ContentTrait;
 use Alexusmai\LaravelFileManager\Traits\PathTrait;
 use Alexusmai\LaravelFileManager\Services\TransferService\TransferFactory;
+use App\Directory;
+use App\Project;
+use App\TaskUser;
+use Illuminate\Http\File;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
+use Plank\Mediable\Media;
+use Plank\Mediable\MediaUploader;
+use Plank\Mediable\MediaUploaderFacade;
 use Storage;
 use Image;
 
@@ -122,21 +130,72 @@ class FileManager
      */
     public function upload($disk, $path, $files, $overwrite)
     {
+        $project = null;
+        $task_id = null;
+        $pt = explode('/', $path);
+        $p = explode('_',$pt[0]);
+        if (count($p)==2) {
+            $project = Project::where('code',$p[1])->first();
+        }
+        if (count($pt)==2) {
+            $task = TaskUser::findOrFail(explode('_',$pt[1])[1]);
+            $task_id = $task->id;
+        }
+
+        if($pt[0])
         foreach ($files as $file) {
             // skip or overwrite files
             if (!$overwrite
                 && Storage::disk($disk)
-                    ->exists($path.'/'.$file->getClientOriginalName())
+                    ->exists($path . '/' . $file->getClientOriginalName())
             ) {
+                $uploader = MediaUploaderFacade::fromSource($file)
+                    ->toDestination('private', $path)
+                    ->onDuplicateIncrement()->upload();
+                $dir = Directory::firstOrCreate(
+                    ['name' => $uploader->getDiskPath()],
+                    ['disk' => 'private']
+                );
+                if ($project) {
+
+                    $project->attachMedia($uploader, 'task_' . $task_id);
+                }
+
                 continue;
             }
 
+
             // overwrite or save file
+            if (Storage::disk($disk)
+                ->exists($path . '/' . $file->getClientOriginalName())
+            ) {
+
+
             Storage::disk($disk)->putFileAs(
                 $path,
                 $file,
                 $file->getClientOriginalName()
             );
+
+               // $media = MediaUploaderFacade::importPath($disk, $path . '/' . $file->getClientOriginalName());
+               $media = Media::forPathOnDisk('private', $path . '/' . $file->getClientOriginalName())->first();
+                MediaUploaderFacade::update($media);
+                continue;
+        }
+            $uploader = MediaUploaderFacade::fromSource($file)
+                ->toDestination('private', $path)
+                ->onDuplicateReplace()->upload();
+            $dir = Directory::firstOrCreate(
+                ['name' => $uploader->getDiskPath()],
+                ['disk' => 'private']
+            );
+            if ($project) {
+
+                $project->attachMedia($uploader, 'task_' . $task_id);
+            }
+
+
+
         }
 
         return [
@@ -169,7 +228,11 @@ class FileManager
                     Storage::disk($disk)->deleteDirectory($item['path']);
                 } else {
                     // delete file
-                    Storage::disk($disk)->delete($item['path']);
+                    $media = Media::forPathOnDisk('private', $item['path'])->first();
+
+
+                    $media->delete();
+                   // Storage::disk($disk)->delete($item['path']);
                 }
             }
 
@@ -222,7 +285,11 @@ class FileManager
      */
     public function rename($disk, $newName, $oldName)
     {
-        Storage::disk($disk)->move($oldName, $newName);
+
+        $media = Media::forPathOnDisk('private', $oldName)->first();
+
+        $media->rename($newName);
+      //  Storage::disk($disk)->move($oldName, $newName);
 
         return [
             'result' => [
