@@ -2,6 +2,7 @@
 
 namespace Alexusmai\LaravelFileManager\Services\ACLService;
 
+use App\Directory;
 use App\DirectoryUser;
 use App\Project;
 use Cache;
@@ -33,10 +34,19 @@ class ACL
      */
     public function getAccessLevel($disk, $path = '/')
     {
-
-        $du = DirectoryUser::where('user_id',auth()->id())->where('path',$path)->first();
+        $dr = Directory::where('name',$path)->first();
+        if ($dr) {
+            if ($dr->creator_id == auth()->id()) {
+                return 2;
+            }
+        }
+        $du = DirectoryUser::where('user_id',auth()->id())->where('path',$path)->max('access');
+        info(auth()->id());
+      info('path iss :' . $path);
+       info('path iss :' . $path.':'.$du);
         if ($du) {
-            return $du->access;
+           // info($du);
+            return $du;
         }
         return config('file-manager.aclStrategy') === 'blacklist' ? 2 : 1;
        // var_dump(strlen($pth[0]).':'.strlen($pth[1]));
