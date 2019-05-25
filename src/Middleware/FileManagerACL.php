@@ -25,6 +25,7 @@ class FileManagerACL
         // get disk and path name
         $disk = $request->has('disk') ? $request->input('disk') : null;
         $path = $request->has('path') ? $request->input('path') : '/';
+        info('ppppp:' . $path);
 
         if (!$disk) {
             return $next($request);
@@ -75,7 +76,7 @@ class FileManagerACL
                 $name = $request->has('file') ? $request->input('file') : null;
 
                 // need r/w access
-                if ($acl->getAccessLevel($disk, $path.'/'.$name) !== 2) {
+                if ($acl->getAccessLevel($disk, $path) !== 2) {
                     return $this->errorMessage();
                 }
 
@@ -84,7 +85,7 @@ class FileManagerACL
             // upload files ====================================================
             case 'fm.upload':
                 // need r/w access
-                if ($acl->getAccessLevel($disk, $path.'/*') !== 2) {
+                if ($acl->getAccessLevel($disk, $path) !== 2) {
                     return $this->errorMessage();
                 }
 
@@ -166,8 +167,29 @@ class FileManagerACL
                 // old name
                 $path = $request->has('oldName') ? $request->input('oldName')
                     : null;
+                $newPath = $request->has('newName') ? $request->input('newName')
+                    : null;
 
                 // need r/w access
+                if ($newPath) {
+                    $pt = explode('/',$newPath);
+                    $pth = '';
+                    info(count($pt));
+                    if (count($pt) > 3) {
+                        return response()->json([
+                            'result' => [
+                                'status'  => 'error',
+                                'message' => 'خطأ فى التسمية من فضلك أعد تصحيح اﻹسم'
+                            ],
+                        ]);
+                    }
+                }
+
+/*                for ($i = 0; $i < count($pt)-1; $i++) {
+                    $pth .=$pt[$i].'/';
+                }*/
+
+                //$path = trim($pth, "/");
                 if ($acl->getAccessLevel($disk, $path) !== 2) {
                     return $this->errorMessage();
                 }
