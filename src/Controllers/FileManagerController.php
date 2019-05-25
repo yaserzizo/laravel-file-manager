@@ -50,7 +50,7 @@ class FileManagerController extends Controller
         //$project = Project::findOrFail($request->project);
         $p=$request->project;
         $t = $request->task;
-        $path = $t?$p.'/'.$t:$p;
+        $path = $t !='?$p.'/'.$t:$p;
         return response()->json(
             $this->fm->initialize($path)
         );
