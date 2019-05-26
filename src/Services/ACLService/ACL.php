@@ -5,6 +5,7 @@ namespace Alexusmai\LaravelFileManager\Services\ACLService;
 use App\Directory;
 use App\DirectoryUser;
 use App\Project;
+use App\Task;
 use Cache;
 
 class ACL
@@ -34,12 +35,32 @@ class ACL
      */
     public function getAccessLevel($disk, $path = '/')
     {
+
+        $ts = explode('/',$path);
+        if (count($ts) > 1) {
+            $tmp = explode('_',$ts[1]);
+            if (count($tmp) > 1 && $tmp[0] == 'task') {
+
+                $task = Task::find($tmp[1]);
+                if ($task) {
+                    if ($task->main_status == 1) {
+                        info('return 1');
+                        return 1;
+                    }
+                }
+            }
+        }
+        info('gooo');
+        if (count($ts) > 2) {
+            $path = $ts[0] . '/' . $ts[1];
+        }
         $dr = Directory::where('name',$path)->first();
         if ($dr) {
             if ($dr->creator_id == auth()->id()) {
                 return 2;
             }
         }
+
         $du = DirectoryUser::where('user_id',auth()->id())->where('path',$path)->max('access');
         info(auth()->id());
       info('path iss :' . $path);
