@@ -3,7 +3,9 @@
 namespace Alexusmai\LaravelFileManager\Traits;
 
 use Alexusmai\LaravelFileManager\Services\ACLService\ACL;
-use Spatie\UrlSigner\Laravel\UrlSignerFacade;
+//use Spatie\UrlSigner\Laravel\UrlSignerFacade;
+use App\Media;
+use \Illuminate\Support\Facades\URL;
 use Storage;
 
 trait ContentTrait
@@ -23,18 +25,32 @@ trait ContentTrait
 
         // get a list of directories
         $directories = $this->filterDir($disk, $content);
+        foreach ($directories as $key => $val) {
+            $directories[$key]['creator'] = '-';
+        }
 
         // get a list of files
         $files = $this->filterFile($disk, $content);
         //$files=null;
         info('yesy');
+        $i=0;
         foreach($files as $key => $csm)
         {
-            $files[$key]['durl'] = UrlSignerFacade::sign(config('app.url').'/download-file/'.$disk.'/'.$files[$key]['path'].'?dsk=nothing', 1);
-            $files[$key]['surl'] = UrlSignerFacade::sign(config('app.url').'/file-manager/stream-file/'.$disk.'/'.$files[$key]['path'], 1);
-            $files[$key]['purl'] = UrlSignerFacade::sign(config('app.url').'/file-manager/preview/'.$disk.'/'.$files[$key]['path'], 1);
-            $files[$key]['thurl'] = UrlSignerFacade::sign(config('app.url').'/file-manager/thumbnails/'.$disk.'/'.$files[$key]['path'], 1);
+            $files[$key]['durl'] = URL::temporarySignedRoute('file.download',now()->addHours(5),['disk'=>$disk,'path'=>$files[$key]['path']]);
+            $files[$key]['surl'] = URL::temporarySignedRoute('file.stream',now()->addHours(5),['disk'=>$disk,'path'=>$files[$key]['path']]);
+            $files[$key]['purl'] = URL::temporarySignedRoute('file.prev',now()->addHours(5),['disk'=>$disk,'path'=>$files[$key]['path']]);
+            $files[$key]['thurl'] = URL::temporarySignedRoute('file.thump',now()->addHours(5),['disk'=>$disk,'path'=>$files[$key]['path']]);
+            //$files[$key]['creator']='محمد'.$i;
+            $files[$key]['creator']='-';
+            $media = Media::where('directory',$files[$key]['dirname'])->where('filename',$files[$key]['filename'])->first();
+            if ($media) {
+                if ($media->creator_id) {
+                    $media->load('creator');
+                    $files[$key]['creator']=$media->creator->name;
+                }
 
+            }
+            $i++;
         }
        // var_dump($files);
         return compact('directories', 'files');
@@ -113,10 +129,10 @@ trait ContentTrait
         $file['extension'] = isset($pathInfo['extension'])
             ? $pathInfo['extension'] : '';
         $file['filename'] = $pathInfo['filename'];
-        $file['durl'] = UrlSignerFacade::sign(config('app.url').'/download-file/'.$disk.'/'.$path, 1);
-        $file['surl'] = UrlSignerFacade::sign(config('app.url').'/file-manager/stream-file/'.$disk.'/'.$path, 1);
-        $file['purl'] = UrlSignerFacade::sign(config('app.url').'/file-manager/preview/'.$disk.'/'.$path, 1);
-        $file['thurl'] = UrlSignerFacade::sign(config('app.url').'/file-manager/thumbnails/'.$disk.'/'.$path, 1);
+        $file['durl'] = URL::temporarySignedRoute('file.download',now()->addHours(5),['disk'=>$disk,'path'=>$path]);
+        $file['surl'] = URL::temporarySignedRoute('file.stream',now()->addHours(5),['disk'=>$disk,'path'=>$path]);
+        $file['purl'] = URL::temporarySignedRoute('file.prev',now()->addHours(5),['disk'=>$disk,'path'=>$path]);
+        $file['thurl'] =  URL::temporarySignedRoute('file.thump',now()->addHours(5),['disk'=>$disk,'path'=>$path]);
 
 
         // if ACL ON
