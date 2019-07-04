@@ -152,10 +152,10 @@ class FileManager
                 $uploader = MediaUploaderFacade::fromSource($file)
                     ->toDestination('private', $path)
                     ->onDuplicateIncrement()->upload();
-                $dir = Directory::firstOrCreate(
+/*                $dir = Directory::firstOrCreate(
                     ['name' => $uploader->getDiskPath()],
                     ['disk' => 'private']
-                );
+                );*/
                 if ($project) {
 
                     $project->attachMedia($uploader, 'task_' . $task_id);
@@ -185,10 +185,10 @@ class FileManager
             $uploader = MediaUploaderFacade::fromSource($file)
                 ->toDestination('private', $path)
                 ->onDuplicateReplace()->upload();
-            $dir = Directory::firstOrCreate(
+/*            $dir = Directory::firstOrCreate(
                 ['name' => $uploader->getDiskPath()],
                 ['disk' => 'private']
-            );
+            );*/
             if ($project) {
 
                 $project->attachMedia($uploader, 'task_' . $task_id);
@@ -288,7 +288,8 @@ class FileManager
 
         $media = Media::forPathOnDisk('private', $oldName)->first();
 
-        $media->rename($newName);
+        $media->rename(basename($newName));
+
       //  Storage::disk($disk)->move($oldName, $newName);
 
         return [
@@ -315,8 +316,7 @@ class FileManager
         } else {
             $filename = basename($path);
         }
-        info($path);
-        info(storage_path('private').'/'.$path);
+
         return  Storage::disk($disk)->download($path, $filename);//Response::download($path);
     }
 
