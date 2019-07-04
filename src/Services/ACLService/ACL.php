@@ -35,7 +35,57 @@ class ACL
      */
     public function getAccessLevel($disk, $path = '/')
     {
+/*        $fn = explode('.', $path);
 
+        if (count($fn) > 1) {
+
+
+            $extension = end($fn);
+            if (strlen($extension) < 6) {
+
+                info('acl path is: ' . $path . 'and:  ' . $extension);
+
+                $du = DirectoryUser::where('user_id', auth()->id())->where('path', $path)->first();
+
+                info(auth()->id());
+                info('path iss :' . $path);
+                info('path iss :' . $path . ':' . $du);
+                if ($du) {
+                    $du->load('directory');
+                    if ($du->directory->closed) {
+                        return 1;
+                    }
+                   // info('file access: ' . $du->access);
+                    return $du->access;
+                }
+
+                $du = DirectoryUser::where('user_id', auth()->id())->where('path', dirname($path) . '/*')->first();
+
+
+                if ($du) {
+                    $du->load('directory');
+                    if ($du->directory->closed) {
+                        return 1;
+                    }
+                   // info('directoryFile access: ' . $du->access);
+                    return $du->access;
+                }
+            }
+        }
+
+        $du = DirectoryUser::where('user_id',auth()->id())->where('path',$path)->first();
+
+
+        if ($du) {
+            $du->load('directory');
+            if ($du->directory->closed) {
+                return 1;
+            }
+           // info('directory access: '.$du->access);
+            return $du->access;
+        }
+        return 0;
+        info('not found');
         $ts = explode('/',$path);
         if (count($ts) > 1) {
             $tmp = explode('_',$ts[1]);
@@ -69,18 +119,33 @@ class ACL
            // info($du);
             return $du;
         }
-        return config('file-manager.aclStrategy') === 'blacklist' ? 2 : 1;
+        return config('file-manager.aclStrategy') === 'blacklist' ? 2 : 1;*/
        // var_dump(strlen($pth[0]).':'.strlen($pth[1]));
            // Media::inDirectory('uploads', 'foo/bar');
         // get rules list
-        $rules = $this->rulesForDisk($disk);
+        info('begin'.$path);
 
+        $rules = $this->rulesForDisk($disk);
+        info('begin:'.auth()->id());
         // find the first rule where the paths are equal
+        $exactPath = null;
+        foreach ($rules as $rule) {
+            if ($rule['path']==$path) {
+                info('rule:' . $rule['path']);
+                $exactPath = $rule['access'];
+                break;
+            }
+        }
+        if ($exactPath) {
+            info('exact path');
+            return $exactPath;
+        }
         $firstRule = array_first($rules, function ($value) use ($path) {
             return fnmatch($value['path'], $path);
         });
 
         if ($firstRule) {
+            info('match path');
             return $firstRule['access'];
         }
 
