@@ -9,11 +9,12 @@ use Alexusmai\LaravelFileManager\Traits\PathTrait;
 use Alexusmai\LaravelFileManager\Services\TransferService\TransferFactory;
 use App\Directory;
 use App\Project;
+use App\Task;
 use App\TaskUser;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
-use Plank\Mediable\Media;
+use App\Media;
 use Plank\Mediable\MediaUploader;
 use Plank\Mediable\MediaUploaderFacade;
 use Storage;
@@ -138,7 +139,7 @@ class FileManager
             $project = Project::where('code',$p[1])->first();
         }
         if (count($pt)==2) {
-            $task = TaskUser::findOrFail(explode('_',$pt[1])[1]);
+            $task = Task::findOrFail(explode('_',$pt[1])[1]);
             $task_id = $task->id;
         }
 
@@ -225,6 +226,12 @@ class FileManager
             } else {
                 if ($item['type'] === 'dir') {
                     // delete directory
+                    return [
+                        'result' => [
+                            'status'  => 'error',
+                            'message' => trans('file-manager::response.aclError'),
+                        ],
+                    ];
                     Storage::disk($disk)->deleteDirectory($item['path']);
                 } else {
                     // delete file
@@ -287,7 +294,7 @@ class FileManager
     {
 
         $media = Media::forPathOnDisk('private', $oldName)->first();
-
+        info('oldName:'.$oldName);
         $media->rename(basename($newName));
 
       //  Storage::disk($disk)->move($oldName, $newName);
@@ -526,3 +533,4 @@ class FileManager
             ->response($path, $filename, ['Accept-Ranges' => 'bytes']);
     }
 }
+
