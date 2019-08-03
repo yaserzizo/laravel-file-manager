@@ -35,6 +35,7 @@ class ACL
      */
     public function getAccessLevel($disk, $path = '/')
     {
+       // return 2;
 /*        $fn = explode('.', $path);
 
         if (count($fn) > 1) {
@@ -129,15 +130,24 @@ class ACL
         info('begin:'.auth()->id());
         // find the first rule where the paths are equal
         $exactPath = null;
+        $rpath=null;
         foreach ($rules as $rule) {
             if ($rule['path']==$path) {
                 info('rule:' . $rule['path']);
                 $exactPath = $rule['access'];
+                $rpath = $rule['path'];
                 break;
             }
         }
         if ($exactPath) {
             info('exact path');
+            $du = DirectoryUser::where('path',$rpath)->first();
+
+            if ($du) {
+                if ($du->directory->closed == 1) {
+                    return 1;
+                }
+            }
             return $exactPath;
         }
         $firstRule = array_first($rules, function ($value) use ($path) {
@@ -146,11 +156,18 @@ class ACL
 
         if ($firstRule) {
             info('match path');
+            $du = DirectoryUser::where('path',$firstRule['path'])->first();
+
+            if ($du) {
+                if ($du->directory->closed == 1) {
+                    return 1;
+                }
+            }
             return $firstRule['access'];
         }
 
         // positive or negative ACL strategy
-        return config('file-manager.aclStrategy') === 'blacklist' ? 2 : 0;
+        return config('file-manager.aclStrategy') === 'blacklist' ? 1 : 0;
     }
 
     /**
