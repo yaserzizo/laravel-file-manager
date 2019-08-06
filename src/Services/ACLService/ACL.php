@@ -145,6 +145,7 @@ class ACL
 
             if ($du) {
                 if ($du->directory->closed == 1) {
+                    info('closed test');
                     return 1;
                 }
             }
@@ -153,21 +154,29 @@ class ACL
         $firstRule = array_first($rules, function ($value) use ($path) {
             return fnmatch($value['path'], $path);
         });
+        if (!$firstRule) {
+            $firstRule = array_first($rules, function ($value) use ($path) {
+                return fnmatch($value['path'] . '/*', $path);
+            });
+        }
 
         if ($firstRule) {
-            info('match path');
+ /*           info('match path');
             $du = DirectoryUser::where('path',$firstRule['path'])->first();
 
             if ($du) {
+                info('clsss');
+                info('iiis1'.$du->directory->closed.':'.$du->directory);
                 if ($du->directory->closed == 1) {
+                    info('iiis'.$du->directory->closed);
                     return 1;
                 }
-            }
-            return $firstRule['access'];
+            }*/
+            return 1;
         }
 
         // positive or negative ACL strategy
-        return config('file-manager.aclStrategy') === 'blacklist' ? 1 : 1;
+        return config('file-manager.aclStrategy') === 'blacklist' ? 1 : 0;
     }
 
     /**
